@@ -1,35 +1,74 @@
 #include "main.h"
-#include <stdarg.h>
-#include <unistd.h>
+
+void print_buffer(char buffer[], int *buff_ind);
 /**
- * _printf - produces output according to a format
- * @format: format string
- * Return: the number of characters printed
+ * _printf - function that produces output according to a format
+ *
+ * @format: pointer
+ *
+ * Return: Printed_chars.
  */
 int _printf(const char *format, ...)
 {
-	va_list inputs;
+	int j, flags, width, precision, size;
 
-	int printed_chars = 0;
+	int printed = 0, printed_chars = 0, buff_ind = 0;
 
-	int i;
+	va_list list;
 
-	va_start(inputs, format);
+	char buffer[BUFF_SIZE];
 
-	for (i = 0; format && format[i] != '\0'; i++)
+	if (format == NULL)
 	{
-		if (format[i] == '%')
+		return (-1);
+	}
+
+	va_start(list, format);
+
+	for (j = 0; format && format[j] != '\0'; j++)
+	{
+		if (format[j] != '%')
 		{
-			i++;
-			printed_chars += handle_conversion(format, &i, inputs);
+			buffer[buff_ind++] = format[j];
+			if (buff_ind == BUFF_SIZE)
+				print_buffer(buffer, &buff_ind);
+			/* write(1, &format[i], 1);*/
+			printed_chars++;
 		}
 		else
 		{
-			_putchar(format[i]);
-			printed_chars++;
+			print_buffer(buffer, &buff_ind);
+			flags = get_flags(format, &j);
+			width = get_width(format, &j, list);
+			precision = get_precision(format, &j, list);
+			size = get_size(format, &j);
+			++j;
+			printed = handle_print(format, &j, list, buffer,
+				flags, width, precision, size);
+			if (printed == -1)
+			{
+				return (-1);
+			}
+			printed_chars += printed;
 		}
 	}
-
-	va_end(inputs);
+	print_buffer(buffer, &buff_ind);
+	va_end(list);
 	return (printed_chars);
+}
+/**
+ * print_buffer - print the content of buffer
+ *
+ * @buffer: array
+ * @buff_ind: pointer
+ *
+ * Return: empty
+ */
+void print_buffer(char buffer[], int *buff_ind)
+{
+	if (*buff_ind > 0)
+	{
+		write(1, &buffer[0], *buff_ind);
+	}
+	*buff_ind = 0;
 }
